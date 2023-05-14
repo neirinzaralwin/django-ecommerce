@@ -2,14 +2,16 @@ import requests
 from getpass import getpass
 
 endpoint = 'http://127.0.0.1:8000/api/register/'
-username = input("What is your username to register?\n")
+name = input("What is your name to register?\n")
+email = input("What is your email to register?\n")
 password = input("What is your password to register?\n")
 
 data = {
-        'username': username,
+        'name': name,
+        'email': email,
         'password': password
     }
-response = requests.post(endpoint, json={'username': username,'password': password})
+response = requests.post(endpoint, json=data)
 
 if response.status_code == 201:
     print(response.json())

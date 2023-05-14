@@ -2,7 +2,9 @@ from rest_framework import generics, permissions, authentication
 from .permissions import IsAdminUser, IsStaffPermission, IsReadOnly
 from .models import Category, Product
 from rest_framework.response import Response
+from rest_framework import status
 from .serializers import CategorySerializer, ProductSerializer
+from django.http import Http404
 
 class categoryList(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
@@ -57,7 +59,10 @@ class productDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdminUser | IsStaffPermission | IsReadOnly]
     
     def get(self, request, *args, **kwargs):
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+        except Http404:
+            return Response({"status": "error", "message": "product not found"}, status=status.HTTP_404_NOT_FOUND)    
         serializer = self.get_serializer(instance)
         data = {
             'status': 'success',
