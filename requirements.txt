@@ -2,3 +2,4 @@ django>=4.1.0,<4.1.7
 djangorestframework
 Pillow>=9.3
 djangorestframework-simplejwt==5.2.2
+requests

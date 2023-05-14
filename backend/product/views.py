@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, authentication
-from .permissions import IsStaffPermission
+from .permissions import IsAdminUser, IsStaffPermission, IsReadOnly
 from .models import Category, Product
 from rest_framework.response import Response
 from .serializers import CategorySerializer, ProductSerializer
@@ -7,7 +7,7 @@ from .serializers import CategorySerializer, ProductSerializer
 class categoryList(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
-    permission_classes = [permissions.IsAdminUser,IsStaffPermission]
+    permission_classes = [IsAdminUser | IsStaffPermission | IsReadOnly]
 
     def get(self, request):
         queryset = self.get_queryset()
@@ -22,7 +22,7 @@ class categoryList(generics.ListCreateAPIView):
 class categoryDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
-    permission_classes = [permissions.IsAdminUser,IsStaffPermission]
+    permission_classes = [IsAdminUser | IsStaffPermission | IsReadOnly]
     
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -39,7 +39,7 @@ class productList(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
     authentication_classes = [authentication.SessionAuthentication]
-    permission_classes = [permissions.IsAdminUser,IsStaffPermission]
+    permission_classes = [IsAdminUser | IsStaffPermission | IsReadOnly]
     
     def get(self, request):
         queryset = self.get_queryset()
@@ -54,7 +54,7 @@ class productList(generics.ListCreateAPIView):
 class productDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
-    permission_classes = [permissions.IsAdminUser,IsStaffPermission]
+    permission_classes = [IsAdminUser | IsStaffPermission | IsReadOnly]
     
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
