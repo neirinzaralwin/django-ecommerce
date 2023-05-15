@@ -5,13 +5,19 @@ from rest_framework.exceptions import AuthenticationFailed, NotFound
 from rest_framework import status
 from .serializers import UserSerializer
 from .models import User
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class RegisterView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"status" : "success", "message": "Registered successfully", "user" :serializer.data})
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+        token = str(refresh.access_token)
+
+        return Response({"status" : "success", "message": "Registered successfully", "token" : token ,"user" :serializer.data})
 
 class LoginView(APIView):
     def post(self, request):
@@ -30,7 +36,14 @@ class LoginView(APIView):
             'name': user.name,
             'email': user.email,
         }
-        return Response({"status" : "success", "message": "Logined successfully", "user" :data})    
+
+        refresh = RefreshToken.for_user(user)
+        token = str(refresh.access_token)
+        response = Response()
+        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.data = {"status" : "success", "message": "Logined successfully", "token" : token,"user" :data}
+
+        return response    
 
 class DeleteView(APIView):
     def delete(self, request, user_id):
