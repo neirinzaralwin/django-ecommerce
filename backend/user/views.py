@@ -6,6 +6,8 @@ from rest_framework import status
 from .serializers import UserSerializer
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 
 
 class RegisterView(APIView):
@@ -57,7 +59,7 @@ class DeleteView(APIView):
 
 class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.all().filter(is_staff=False, is_superuser=False)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -68,7 +70,68 @@ class UserListView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         data = {
             'status': 'success',
-            'message': 'Categories fetched successfully',
+            'message': 'All users fetched successfully',
             'data': serializer.data,
         }
         return Response(data)
+
+
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = UserSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_object(self):
+        user_id = self.kwargs.get('user_id')
+        try:
+            user = User.objects.get(id=user_id)
+            return user
+        except User.DoesNotExist:
+            raise NotFound('User not found.')
+        
+
+    def get(self, request, user_id):
+        try:
+            user = self.get_object()
+            serializer = self.serializer_class(user)
+            data = {
+                'status': 'success',
+                'message': 'User fetched successfully',
+                'data': serializer.data,
+            }
+            return Response(data)
+        except NotFound as e:
+            return Response({"status": "error", "message": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, *args, **kwargs):
+        try:
+            user = self.get_object()
+            if request.user.id != user.id:
+                return Response({"status": "error", "message": "You don't have permission to update this user."}, status=status.HTTP_403_FORBIDDEN)
+            serializer = self.serializer_class(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                data = {
+                    'status': 'success',
+                    'message': 'User updated successfully',
+                    'data': serializer.data,
+                }
+                return Response(data)
+            return Response({
+                    'status': 'error','message': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+        except NotFound as e:
+            return Response({"status": "error", "message": str(e)}, status=status.HTTP_404_NOT_FOUND)            
+             
+    def delete(self, request, user_id):
+        try:
+            user = self.get_object()
+            user.delete()
+            data = {
+                'status': 'success',
+                'message': 'User deleted successfully',
+            }
+            return Response(data)
+        except NotFound as e:
+            return Response({"status": "error", "message": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+  

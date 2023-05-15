@@ -17,4 +17,17 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save() 
         return instance
 
+    def update(self, instance, validated_data):
+        # Update the user fields with the validated data
+        instance.name = validated_data.get('name', instance.name)
+        instance.email = validated_data.get('email', instance.email)
+
+        # If a password is provided, update the password
+        password = validated_data.get('password', None)
+        if password is not None:
+            instance.set_password(password)
+
+        instance.save()
+        return instance  
+
     
